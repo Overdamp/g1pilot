@@ -50,18 +50,20 @@ RUN git clone https://github.com/humanoid-path-planner/hpp-fcl.git && \
 
 ## PINOCCHIO
 WORKDIR /home/forest_ws/src
-RUN git clone -b devel https://github.com/stack-of-tasks/pinocchio.git && \
-    cd /home/forest_ws/src/pinocchio && \
-    git submodule init && \
-    git submodule update && \
+RUN git clone -b v3.3.1 --recursive https://github.com/stack-of-tasks/pinocchio.git && \
     mkdir -p /home/forest_ws/build/pinocchio && \
     cd /home/forest_ws/build/pinocchio && \
     source /opt/ros/jazzy/setup.bash && \
     source /home/forest_ws/setup.bash && \
-    cmake -DCMAKE_INSTALL_PREFIX:STRING=/home/forest_ws/install -DCMAKE_BUILD_TYPE:STRING=Release -DBUILD_WITH_URDF_SUPPORT=ON -DBUILD_WITH_COLLISION_SUPPORT=ON -DBUILD_TESTING=FALSE -DBUILD_PYTHON_INTERFACE=OFF ../../src/pinocchio && \
-    make -j4 && \
+    cmake -DCMAKE_INSTALL_PREFIX:STRING=/home/forest_ws/install \
+          -DCMAKE_BUILD_TYPE:STRING=Release \
+          -DBUILD_WITH_URDF_SUPPORT=ON \
+          -DBUILD_WITH_COLLISION_SUPPORT=ON \
+          -DBUILD_TESTING=FALSE \
+          -DBUILD_PYTHON_INTERFACE=OFF \
+          /home/forest_ws/src/pinocchio && \
+    make -j$(nproc) && \
     make install
-
 
 # xbot2_interface
 WORKDIR /home/forest_ws/src
@@ -70,7 +72,13 @@ RUN git clone -b devel https://github.com/ADVRHumanoids/xbot2_interface.git && \
     cd /home/forest_ws/build/xbot2_interface && \
     source /opt/ros/jazzy/setup.bash && \
     source /home/forest_ws/setup.bash && \
-    cmake -DXBOT2_IFC_BUILD_TESTS=ON -DXBOT2_IFC_BUILD_ROS=OFF -DXBOT2_IFC_BUILD_ROS2=OFF -DCMAKE_INSTALL_PREFIX:STRING=/home/forest_ws/install -DCMAKE_BUILD_TYPE:STRING=Release ../../src/xbot2_interface && \
+    cmake -DXBOT2_IFC_BUILD_TESTS=ON \
+          -DXBOT2_IFC_BUILD_ROS=OFF \
+          -DXBOT2_IFC_BUILD_ROS2=OFF \
+          -DBoost_USE_DEBUG_RUNTIME=OFF \
+          -DCMAKE_INSTALL_PREFIX:STRING=/home/forest_ws/install \
+          -DCMAKE_BUILD_TYPE:STRING=Release \
+          ../../src/xbot2_interface && \
     make -j8 && \
     make install
 
@@ -365,8 +373,15 @@ RUN rm -f package.xml && \
 RUN rm -rf /ros2_ws/src/unitree_ros2/cyclonedds_ws/src/unitree
 
 WORKDIR /ros2_ws
+
+# บังคับให้ if เงื่อนไขเช็ค distro ผ่านตลอด (รองรับทั้ง humble, iron, jazzy ทันที)
+RUN sed -i 's/if(\${DISTRO_ROS} STREQUAL "humble"/if(TRUE/g' /ros2_ws/src/livox_ros_driver2/CMakeLists.txt || true && \
+    sed -i 's/if(DISTRO_ROS STREQUAL "humble"/if(TRUE/g' /ros2_ws/src/livox_ros_driver2/CMakeLists.txt || true
+
+# รัน colcon build
 RUN . /opt/ros/${ROS_DISTRO}/setup.sh && \
-    /home/.base/bin/python3 -m colcon build --cmake-args -DROS_EDITION=ROS2 -DHUMBLE_ROS=humble
+    /home/.base/bin/python3 -m colcon build \
+      --cmake-args -DROS_EDITION=ROS2 -DHUMBLE_ROS=humble
 
 RUN pip install pyqt6 pin meshcat evdev
 RUN apt-get update && apt-get install -y \

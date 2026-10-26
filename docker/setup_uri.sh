@@ -13,9 +13,11 @@ echo "Sourcing installed packages"
 source /opt/ros/${ROS_DISTRO}/setup.bash
 source ./install/setup.bash
 
-# For autocompletion to work in terminal
-eval "$(register-python-argcomplete3 ros2)"
-eval "$(register-python-argcomplete3 colcon)"
+# Enable completion when the helper is installed in this image.
+if command -v register-python-argcomplete3 >/dev/null 2>&1; then
+    eval "$(register-python-argcomplete3 ros2)"
+    eval "$(register-python-argcomplete3 colcon)"
+fi
 
 echo "Setting up DDS"
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp

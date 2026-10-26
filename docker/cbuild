@@ -57,4 +57,4 @@ if [ "$1" = "all" ]; then
 fi
 
 clean_pkgs "$@"
- /home/.base/bin/python3 -m colcon build --symlink-install --executor parallel --parallel-workers 4 --packages-select "$@"
+/home/.base/bin/python3 -m colcon build --symlink-install --executor parallel --parallel-workers 4 --packages-up-to "$@"
