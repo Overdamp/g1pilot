@@ -5,6 +5,7 @@ import os
 import json
 import threading
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from std_msgs.msg import Bool, String, Float64
 from sensor_msgs.msg import Joy
@@ -289,11 +290,11 @@ def main(args=None):
     node = G1LocoClient()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        rclpy.try_shutdown()
 
 if __name__ == "__main__":
     main()
