@@ -116,7 +116,26 @@ Also if you are connected to the robot, you need to source the way to connecto t
 source setup_uri.sh <interface>
 ``` 
 
-For the real Unitree G1 **23 DOF Rev 1.0** in this `g1-23dof` checkout, use the dedicated launch and configuration:
+For the real Unitree G1 **23 DOF Rev 1.0** in this `g1-23dof` checkout, use the dedicated launch and configuration.
+
+Wire the PC to the robot over Ethernet and give that port `192.168.123.123/24` (the IP `config/livox_mid.json` expects). Then start the container with `run_real.sh`, which checks the interface, IP and that the robot (`192.168.123.161`) answers ping. It defaults to `enp43s0`; override with `G1_INTERFACE=<iface>`:
+
+```bash
+sudo ip addr add 192.168.123.123/24 dev enp43s0 && sudo ip link set enp43s0 up
+cd docker
+./run_real.sh
+```
+
+Inside the container, first check that state arrives without starting any motion node (`G1_INTERFACE` is passed in by the script):
+
+```bash
+./cbuild g1pilot
+source /ros2_ws/setup_uri.sh $G1_INTERFACE
+ros2 launch g1pilot robot_state_23dof.launch.py use_rviz:=false
+# another shell: ros2 topic hz /joint_states
+```
+
+Then the full bringup (starts `loco_client`, which can move the robot):
 
 ```bash
 ros2 launch g1pilot bringup_23dof.launch.py
