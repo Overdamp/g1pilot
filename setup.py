@@ -74,6 +74,7 @@ setup(
             'joystick = g1pilot.teleoperation.joystick:main',
             'joy_mux = g1pilot.teleoperation.joy_mux:main',
             'ui_interface = g1pilot.teleoperation.ui_interface:main',
+            'keyboard_teleop = g1pilot.teleoperation.keyboard_teleop:main',
 
             # Navigation Nodes
             'loco_client = g1pilot.navigation.loco_client:main',

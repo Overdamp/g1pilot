@@ -141,6 +141,28 @@ Then the full bringup (starts `loco_client`, which can move the robot):
 ros2 launch g1pilot bringup_23dof.launch.py
 ```
 
+`loco_client` damps the motors when it starts, so the robot must hang on its gantry before launching.
+
+#### Keyboard teleoperation
+
+Without a PS4 controller, drive the robot from a terminal. It publishes the same `Joy` layout as the joystick node on `/g1pilot/joy_manual`, so `joy_mux` and `loco_client` work unchanged. Run it in its own shell (it needs a TTY, so it cannot run from a launch file):
+
+```bash
+docker exec -it g1pilot-dev bash
+ros2 run g1pilot keyboard_teleop
+```
+
+| Key | Action |
+|---|---|
+| `r` | Standby (FSM 4), also clears an emergency stop |
+| `b` | Stand up and balance |
+| `w`/`s`, `a`/`d`, `q`/`e` | Forward/back, strafe, turn (hold the key) |
+| `space` / `k` | Stop moving |
+| `+` / `-` | Change speed (default 0.25 m/s, max 0.5 m/s) |
+| `x` | Emergency stop (damps the motors) |
+
+The robot stops `key_timeout` (0.7 s) after a key is released. Do not use it together with a connected PS4 controller, since both publish on the same topic.
+
 This launch uses `config/config_23dof.yaml` and `g1_23dof_rev_1_0.urdf`. It starts robot state, locomotion, joystick, Livox, and MOLA by default. It does not start the 29 DOF OpenSoT arm solver or the DX3 hand controller. Autonomous path planning also needs an occupancy grid on `/map` from a map server.
 
 The older `bringup_launcher.launch.py` remains for the 29 DOF setup; do not use it for the 23 DOF robot.
