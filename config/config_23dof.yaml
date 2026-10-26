@@ -1,0 +1,66 @@
+# ROS 2 parameters for the G1 23 DOF Rev 1.0 hardware profile.
+# Network interface is passed by the dedicated launch file from G1_INTERFACE.
+robot_state:
+  ros__parameters:
+    model: 23dof
+    use_robot: true
+    publish_joint_states: true
+    sim_rate_hz: 50.0
+
+loco_client:
+  ros__parameters:
+    use_robot: true
+    enable_arm_ui: false
+
+nav2point:
+  ros__parameters:
+    publish_rate: 50.0
+    pos_kp: 0.8
+    yaw_kp: 1.5
+    waypoint_tolerance: 0.20
+    goal_tolerance: 0.10
+    frame_id: map
+    joy_topic: /g1pilot/auto_joy
+    path_topic: /g1pilot/path
+    auto_enable_topic: /g1pilot/auto_enable
+    vx_limit: 0.6
+    vy_limit: 0.6
+    wz_limit: 0.5
+
+dijkstra_planner:
+  ros__parameters:
+    map_topic: /map
+    odom_topic: /lidar_odometry/pose_fixed
+    goal_topic: /g1pilot/goal
+    path_topic: /g1pilot/path
+    occ_threshold: 50
+    allow_diagonal: true
+    straight_steps: 50
+    inflation_radius_m: 0.40
+    smooth_enable: true
+    smooth_samples_per_segment: 8
+    smooth_closed: false
+    simplify_min_dist: 0.02
+    shortcut_enable: true
+    turn_cost_gain: 2.0
+
+joystick:
+  ros__parameters:
+    publish_rate: 50.0
+    joystick_name: Wireless Controller
+
+joy_mux:
+  ros__parameters:
+    path_topic: /g1pilot/path
+    odom_topic: /lidar_odometry/pose_fixed
+    manual_topic: /g1pilot/joy_manual
+    out_topic: /g1pilot/joy
+    auto_enable_topic: /g1pilot/auto_enable
+    publish_rate: 50.0
+    lookahead: 0.6
+    goal_tol: 0.30
+    vx_limit: 0.5
+    vy_limit: 0.4
+    wz_limit: 0.4
+    yaw_kp: 1.5
+    manual_priority_window: 0.05

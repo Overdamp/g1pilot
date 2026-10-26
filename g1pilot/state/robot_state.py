@@ -80,6 +80,14 @@ _joint_index_to_ros_name = {
     G1JointIndex.RightWristYaw: "right_wrist_yaw_joint",
 }
 
+# Unitree G1 23 DOF Rev 1.0 keeps the SDK motor slots for the 29 DOF model,
+# but waist roll/pitch and arm wrist pitch/yaw slots are not actuated.
+_joint_index_to_ros_name_23dof = {
+    index: name
+    for index, name in _joint_index_to_ros_name.items()
+    if index <= 12 or index in (15, 16, 17, 18, 19, 22, 23, 24, 25, 26)
+}
+
 
 class RobotState(Node):
     def __init__(self):
@@ -88,10 +96,18 @@ class RobotState(Node):
         self.declare_parameter('use_robot', True)
         self.declare_parameter('interface', '')
         self.declare_parameter('publish_joint_states', True)
+        self.declare_parameter('model', '29dof')
 
         self.use_robot = bool(self.get_parameter('use_robot').value)
         interface = self.get_parameter('interface').get_parameter_value().string_value
         self.publish_joint_states = bool(self.get_parameter('publish_joint_states').value)
+        model = self.get_parameter('model').get_parameter_value().string_value.lower()
+        if model not in ('23dof', '29dof'):
+            raise ValueError("model must be '23dof' or '29dof'")
+        self.joint_index_to_ros_name = (
+            _joint_index_to_ros_name_23dof if model == '23dof'
+            else _joint_index_to_ros_name
+        )
         self.ns = '/g1pilot'
 
         qos_profile = QoSProfile(depth=10)
@@ -100,8 +116,8 @@ class RobotState(Node):
         self.motor_state_pub = self.create_publisher(MotorStateList, f"{self.ns}/motor_state", qos_profile)
         self.tf_broadcaster = TransformBroadcaster(self)
 
-        self.joint_indices = sorted(_joint_index_to_ros_name.keys())
-        self.joint_names = [_joint_index_to_ros_name[i] for i in self.joint_indices]
+        self.joint_indices = sorted(self.joint_index_to_ros_name.keys())
+        self.joint_names = [self.joint_index_to_ros_name[i] for i in self.joint_indices]
         self.joint_state_msg = JointState()
         self.joint_state_msg.name = self.joint_names
 
@@ -149,7 +165,7 @@ class RobotState(Node):
             if idx < len(msg.motor_state):
                 m = msg.motor_state[idx]
                 motor_state = MotorState()
-                motor_state.name = _joint_index_to_ros_name[idx]
+                motor_state.name = self.joint_index_to_ros_name[idx]
                 motor_state.temperature = float(m.temperature[0] if hasattr(m.temperature, "__len__") else m.temperature)
                 motor_state.voltage = float(m.vol)
                 motor_state.position = float(m.q)
@@ -189,7 +205,7 @@ def main(args=None):
         pass
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        rclpy.try_shutdown()
 
 
 if __name__ == '__main__':

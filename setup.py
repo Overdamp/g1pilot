@@ -29,6 +29,9 @@ setup(
 
             'launch/bringup_launcher.launch.py',
             'launch/bringup_opensot.launch.py',
+            'launch/robot_state_23dof.launch.py',
+            'launch/bringup_23dof.launch.py',
+            'launch/bringup_23dof_sim.launch.py',
         ]),
 
         # URDF / XML
@@ -45,7 +48,7 @@ setup(
 
         # Configuration Files
         (f'share/{package_name}/config',
-            expand(['config/*.yaml'])),
+            expand(['config/*.yaml', 'config/*.rviz'])),
 
         # RViz
         (f'share/{package_name}/rviz', expand(['rviz/*.rviz'])),
