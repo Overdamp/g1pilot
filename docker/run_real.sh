@@ -23,7 +23,7 @@ if ! ip link show "${G1_INTERFACE}" >/dev/null 2>&1; then
     exit 1
 fi
 
-if ! ip -br link show "${G1_INTERFACE}" | grep -q 'UP'; then
+if [[ "$(cat "/sys/class/net/${G1_INTERFACE}/operstate")" != "up" ]]; then
     echo "WARNING: ${G1_INTERFACE} is down. Is the Ethernet cable plugged into the robot?" >&2
 fi
 
