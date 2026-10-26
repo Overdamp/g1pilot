@@ -158,14 +158,14 @@ The keys are the same as `g1_ctrl` in `unitree_rl_mjlab`:
 |---|---|
 | `u` | Standby (FSM 4), also clears an emergency stop |
 | `v` | Stand up, balance and enable walking |
-| `w`/`s` | Forward 0.4 m/s / backward 0.3 m/s (hold the key) |
-| `a`/`d` | Strafe left/right 0.2 m/s (hold the key) |
-| `q`/`e` | Turn left/right 0.3 rad/s (hold the key) |
+| `w`/`s` | Forward / backward (hold the key) |
+| `a`/`d` | Strafe left/right (hold the key) |
+| `q`/`e` | Turn left/right (hold the key) |
 | `x` / `space` | Stop moving |
-| `+` / `-` | Speed scale (0.25 to 1.25, default 1.0) |
+| `+` / `-` | Speed scale (0.2 to 1.0, default 0.5) |
 | `p` | Emergency stop (damps the motors) |
 
-Unlike `g1_ctrl`, movement keys must be held: the robot stops `key_timeout` (0.7 s) after a key is released. Do not use it together with a connected PS4 controller, since both publish on the same topic.
+For safety it starts at half of `g1_ctrl`'s speeds (forward 0.2 m/s, strafe 0.1 m/s, turn 0.15 rad/s) and `+` only goes up to `g1_ctrl`'s speeds (forward 0.4 m/s), below `loco_client`'s 0.5 m/s limit. Unlike `g1_ctrl`, movement keys must be held: the robot stops `key_timeout` (0.7 s) after a key is released. Do not use it together with a connected PS4 controller, since both publish on the same topic.
 
 This launch uses `config/config_23dof.yaml` and `g1_23dof_rev_1_0.urdf`. It starts robot state, locomotion, joystick, Livox, and MOLA by default. It does not start the 29 DOF OpenSoT arm solver or the DX3 hand controller. Autonomous path planning also needs an occupancy grid on `/map` from a map server.
 

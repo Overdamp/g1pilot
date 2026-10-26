@@ -19,7 +19,9 @@ BTN_L1, BTN_R2 = 4, 7
 
 # Keys and speeds match unitree_rl_mjlab's g1_ctrl at speed 1.0 (w 0.4 m/s,
 # s 0.3 m/s, a/d 0.2 m/s, q/e 0.3 rad/s). loco_client scales axes by -0.5,
-# so each value here is -2x the velocity.
+# so each value here is -2x the velocity. For safety the scale defaults to
+# half of that and is capped at 1.0, never reaching loco_client's 0.5 m/s.
+SPEED_MIN, SPEED_MAX = 0.2, 1.0
 MOVE_KEYS = {
     'w': (AXIS_LY, -0.8),
     's': (AXIS_LY, 0.6),
@@ -36,7 +38,7 @@ Same keys as g1_ctrl:
   w / s : forward / backward      u : standby (FSM 4, clears E-stop)
   a / d : strafe left / right     v : stand up, balance and start walking
   q / e : turn left / right       x / space : stop moving
-  + / - : speed scale up / down   p : EMERGENCY STOP (damp motors)
+  + / - : speed up / down         p : EMERGENCY STOP (damp motors)
   Ctrl-C: quit
 
 Unlike g1_ctrl, hold a movement key: the robot stops {timeout:.1f} s after it is released.
@@ -50,12 +52,12 @@ class KeyboardTeleop(Node):
 
         self.declare_parameter('topic', '/g1pilot/joy_manual')
         self.declare_parameter('publish_rate', 50.0)
-        self.declare_parameter('speed', 1.0)
+        self.declare_parameter('speed', 0.5)
         self.declare_parameter('key_timeout', 0.7)
 
         self.topic = self.get_parameter('topic').value
         self.rate = float(self.get_parameter('publish_rate').value)
-        self.speed = float(self.get_parameter('speed').value)
+        self.speed = min(SPEED_MAX, max(SPEED_MIN, float(self.get_parameter('speed').value)))
         self.key_timeout = float(self.get_parameter('key_timeout').value)
 
         self.publisher = self.create_publisher(Joy, self.topic, 10)
@@ -69,10 +71,16 @@ class KeyboardTeleop(Node):
         self.dpad_up_ticks = 0
 
         self.create_timer(1.0 / self.rate, self.publish_joy)
+        self.log_speed()
 
     def set_speed(self, speed):
-        self.speed = min(1.25, max(0.25, round(speed, 2)))
-        self.get_logger().info(f'Speed scale: {self.speed:.2f} (w = {0.4 * self.speed:.2f} m/s)')
+        self.speed = min(SPEED_MAX, max(SPEED_MIN, round(speed, 2)))
+        self.log_speed()
+
+    def log_speed(self):
+        self.get_logger().info(
+            f'Speed {self.speed:.1f}x: w {0.4 * self.speed:.2f} m/s, '
+            f'a/d {0.2 * self.speed:.2f} m/s, q/e {0.3 * self.speed:.2f} rad/s')
 
     def handle_key(self, key):
         if key in MOVE_KEYS:
