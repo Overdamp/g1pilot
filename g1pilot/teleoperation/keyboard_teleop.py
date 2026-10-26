@@ -17,27 +17,30 @@ NUM_BUTTONS = 13
 AXIS_LX, AXIS_LY, AXIS_YAW, AXIS_DPAD_Y = 0, 1, 2, 7
 BTN_L1, BTN_R2 = 4, 7
 
-# key -> (axis index, value); loco_client negates the axes, so forward is -1.
+# Keys and speeds match unitree_rl_mjlab's g1_ctrl at speed 1.0 (w 0.4 m/s,
+# s 0.3 m/s, a/d 0.2 m/s, q/e 0.3 rad/s). loco_client scales axes by -0.5,
+# so each value here is -2x the velocity.
 MOVE_KEYS = {
-    'w': (AXIS_LY, -1.0),
-    's': (AXIS_LY, 1.0),
-    'a': (AXIS_LX, -1.0),
-    'd': (AXIS_LX, 1.0),
-    'q': (AXIS_YAW, -1.0),
-    'e': (AXIS_YAW, 1.0),
+    'w': (AXIS_LY, -0.8),
+    's': (AXIS_LY, 0.6),
+    'a': (AXIS_LX, -0.4),
+    'd': (AXIS_LX, 0.4),
+    'q': (AXIS_YAW, -0.6),
+    'e': (AXIS_YAW, 0.6),
 }
 
 HELP = """
 G1 keyboard teleop  (publishes Joy on {topic})
 ---------------------------------------------
-  w / s : forward / backward      r : standby (FSM 4, clears E-stop)
-  a / d : strafe left / right     b : stand up and balance
-  q / e : turn left / right       space / k : stop moving
-  + / - : speed up / down         x : EMERGENCY STOP (damp motors)
+Same keys as g1_ctrl:
+  w / s : forward / backward      u : standby (FSM 4, clears E-stop)
+  a / d : strafe left / right     v : stand up, balance and start walking
+  q / e : turn left / right       x / space : stop moving
+  + / - : speed scale up / down   p : EMERGENCY STOP (damp motors)
   Ctrl-C: quit
 
-Hold a movement key; the robot stops {timeout:.1f} s after it is released.
-Start order: r -> b -> w/a/s/d/q/e
+Unlike g1_ctrl, hold a movement key: the robot stops {timeout:.1f} s after it is released.
+Start order: u -> v -> w/a/s/d/q/e
 """
 
 
@@ -47,7 +50,7 @@ class KeyboardTeleop(Node):
 
         self.declare_parameter('topic', '/g1pilot/joy_manual')
         self.declare_parameter('publish_rate', 50.0)
-        self.declare_parameter('speed', 0.5)
+        self.declare_parameter('speed', 1.0)
         self.declare_parameter('key_timeout', 0.7)
 
         self.topic = self.get_parameter('topic').value
@@ -68,26 +71,26 @@ class KeyboardTeleop(Node):
         self.create_timer(1.0 / self.rate, self.publish_joy)
 
     def set_speed(self, speed):
-        self.speed = min(1.0, max(0.1, round(speed, 2)))
-        self.get_logger().info(f'Speed: {self.speed * 0.5:.2f} m/s, {self.speed * 0.5:.2f} rad/s')
+        self.speed = min(1.25, max(0.25, round(speed, 2)))
+        self.get_logger().info(f'Speed scale: {self.speed:.2f} (w = {0.4 * self.speed:.2f} m/s)')
 
     def handle_key(self, key):
         if key in MOVE_KEYS:
             self.last_move_key = key
             self.t_last_move_key = time.time()
-        elif key in (' ', 'k'):
+        elif key in (' ', 'x'):
             self.last_move_key = None
-        elif key == 'r':
+        elif key == 'u':
             self.last_move_key = None
             self.dpad_up_ticks = self.pulse_ticks
             self.get_logger().info('Standby (FSM 4)')
-        elif key == 'b':
+        elif key == 'v':
             self.button_pulses[BTN_L1] = self.pulse_ticks
             self.get_logger().info('Stand up and balance')
-        elif key == 'x':
+        elif key == 'p':
             self.last_move_key = None
             self.estop_pub.publish(Bool(data=True))
-            self.get_logger().warn('EMERGENCY STOP sent. Press r to recover.')
+            self.get_logger().warn('EMERGENCY STOP sent. Press u to recover.')
         elif key in ('+', '='):
             self.set_speed(self.speed + 0.1)
         elif key in ('-', '_'):
