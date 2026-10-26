@@ -64,3 +64,6 @@ hardware/~$armAssembly.SLDASM
 
 *.FCBak
 
+
+# Upstream Unitree model sources (large, not used at runtime)
+/g1_description/
